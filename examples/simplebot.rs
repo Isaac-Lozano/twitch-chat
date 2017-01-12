@@ -7,7 +7,7 @@ fn main() {
     println!("Making client.");
     let mut client = ChatClient::new();
     println!("Authenticating.");
-    client.send_authenticate(Some(Auth::new("OnVar", "oauth:zmv8j4nqkzd08kygyqz3mhjusjmzy4")));
+    client.send_authenticate(None));
     println!("Joining.");
     client.send_join("#onvar");
 
