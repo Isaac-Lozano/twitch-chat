@@ -1,5 +1,5 @@
 [package]
-name = "twitch_websocket"
+name = "twitch_chat"
 version = "0.1.0"
 authors = ["Isaac Lozano <109lozanoi@gmail.com>"]
 
