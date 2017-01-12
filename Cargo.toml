@@ -1,0 +1,7 @@
+[package]
+name = "twitch_websocket"
+version = "0.1.0"
+authors = ["Isaac Lozano <109lozanoi@gmail.com>"]
+
+[dependencies]
+websocket = "0.17"
