@@ -8,7 +8,7 @@ use std::error::Error;
 pub struct Message
 {
     pub raw: String,
-    pub tags: Option<HashMap<String, String>>,
+    pub tags: HashMap<String, String>,
     pub from: Option<String>,
     pub cmd: String,
     pub args: Vec<String>,
@@ -21,7 +21,7 @@ impl FromStr for Message
     {
         let mut line = String::from(s);
         let original_line = line.clone();
-        let mut tags = None;
+        let mut tags = HashMap::new();
         let mut from = None;
         let cmd;
         let mut args = Vec::new();
@@ -31,8 +31,6 @@ impl FromStr for Message
         /* parse tags */
         if line.starts_with("@")
         {
-            let mut tag_map = HashMap::new();
-
             {
                 let split: Vec<&str> = line[1..].splitn(2, ' ').collect();
 
@@ -47,11 +45,9 @@ impl FromStr for Message
                     let key = tag_split.next().unwrap();
                     let value = tag_split.next().unwrap();
 
-                    tag_map.insert(key.to_string(), value.to_string());
+                    tags.insert(key.to_string(), value.to_string());
                 }
             }
-
-            tags = Some(tag_map);
 
             line = new_line;
         }
@@ -121,7 +117,7 @@ impl FromStr for Message
 #[derive(Debug)]
 pub struct MessageError(&'static str);
 
-impl<'a> fmt::Display for MessageError
+impl fmt::Display for MessageError
 {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result
     {
