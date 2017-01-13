@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
+use std::fmt;
+use std::error::Error;
+
 #[derive(Debug)]
 pub struct Message
 {
@@ -112,5 +115,24 @@ impl FromStr for Message
                 args: args,
             }
         )
+    }
+}
+
+#[derive(Debug)]
+pub struct MessageError(&'static str);
+
+impl<'a> fmt::Display for MessageError
+{
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result
+    {
+        write!(fmt, "MessageError: {}", self.description())
+    }
+}
+
+impl Error for MessageError
+{
+    fn description(&self) -> &str
+    {
+        self.0
     }
 }

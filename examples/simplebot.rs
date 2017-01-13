@@ -1,22 +1,21 @@
-extern crate twitch_websocket;
+extern crate twitch_chat;
 
-use twitch_websocket::client::{ChatClient, TwitchSender, TwitchReceiver};
-use twitch_websocket::auth::Auth;
+use twitch_chat::client::{ChatClient, TwitchSender, TwitchReceiver};
 
 fn main() {
     println!("Making client.");
-    let mut client = ChatClient::new();
+    let mut client = ChatClient::connect().unwrap();
     println!("Authenticating.");
-    client.send_authenticate(None));
+    client.send_authenticate(None).unwrap();
     println!("Joining.");
-    client.send_join("#onvar");
+    client.send_join("#onvar").unwrap();
 
     let (mut sender, mut receiver) = client.split();
 
     println!("Getting messages.");
     loop
     {
-        let message = receiver.get_message();
+        let message = receiver.get_message().unwrap();
         println!("<< {}", message.raw);
         match message.cmd.as_str()
         {
@@ -28,7 +27,7 @@ fn main() {
                     {
                         let out_str = format!("You said: {}", message);
                         println!(">> {}", out_str);
-                        sender.send_message(channel, &out_str);
+                        sender.send_message(channel, &out_str).unwrap();
                     }
                 }
             },
