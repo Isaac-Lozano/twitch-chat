@@ -17,8 +17,11 @@ use std::str::FromStr;
 use std::fmt;
 use std::error::Error;
 
+use std::cmp;
+
 pub struct ChatClient
 {
+    buffer: Vec<u8>,
     sender: WsSender<WebSocketStream>,
     receiver: WsReceiver<WebSocketStream>,
 }
@@ -37,6 +40,7 @@ impl ChatClient
 
         Ok(ChatClient
         {
+            buffer: Vec::new(),
             sender: sender,
             receiver: receiver,
         })
@@ -66,6 +70,7 @@ impl ChatClient
             },
             ChatReceiver
             {
+                buffer: self.buffer,
                 receiver: self.receiver,
             }
         )
@@ -85,15 +90,34 @@ impl TwitchReceiver for ChatClient
 {
     fn get_message(&mut self) -> ClientResult<Message>
     {
-        let msg: WsMessage = try!(self.receiver.recv_message());
-
         loop
         {
+            let mut end_idx = None;
+            for idx in 0..cmp::max(self.buffer.len(), 1) - 1
+            {
+                if *self.buffer.get(idx).unwrap() == '\r' as u8 && *self.buffer.get(idx + 1).unwrap() == '\n' as u8
+                {
+                    end_idx =  Some(idx);
+                }
+            }
+
+            if let Some(idx) = end_idx
+            {
+                let ret;
+                {
+                    let line = &self.buffer[..idx];
+                    ret = try!(Message::from_str(try!(str::from_utf8(line))));
+                }
+                self.buffer = Vec::from(&self.buffer[idx+2..]);
+                return Ok(ret);
+            }
+
+            let msg: WsMessage = try!(self.receiver.recv_message());
             match msg.opcode
             {
                 Type::Text =>
                 {
-                    return Ok(Message::from_str(str::from_utf8(&*msg.payload).unwrap()).unwrap());
+                    self.buffer.extend(msg.payload.iter());
                 }
                 /* TODO: Error? */
                 _ => {},
@@ -118,6 +142,7 @@ impl TwitchSender for ChatSender
 
 pub struct ChatReceiver
 {
+    buffer: Vec<u8>,
     receiver: WsReceiver<WebSocketStream>,
 }
 
@@ -125,15 +150,35 @@ impl TwitchReceiver for ChatReceiver
 {
     fn get_message(&mut self) -> ClientResult<Message>
     {
-        let msg: WsMessage = try!(self.receiver.recv_message());
-
         loop
         {
+            let mut end_idx = None;
+            for idx in 0..cmp::max(self.buffer.len(), 1) - 1
+            {
+                if *self.buffer.get(idx).unwrap() == '\r' as u8 && *self.buffer.get(idx + 1).unwrap() == '\n' as u8
+                {
+                    end_idx =  Some(idx);
+                    break;
+                }
+            }
+
+            if let Some(idx) = end_idx
+            {
+                let ret;
+                {
+                    let line = &self.buffer[..idx];
+                    ret = try!(Message::from_str(try!(str::from_utf8(line))));
+                }
+                self.buffer = Vec::from(&self.buffer[idx+2..]);
+                return Ok(ret);
+            }
+
+            let msg: WsMessage = try!(self.receiver.recv_message());
             match msg.opcode
             {
                 Type::Text =>
                 {
-                    return Ok(Message::from_str(str::from_utf8(&*msg.payload).unwrap()).unwrap());
+                    self.buffer.extend(msg.payload.iter());
                 }
                 /* TODO: Error? */
                 _ => {},

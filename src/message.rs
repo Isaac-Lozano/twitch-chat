@@ -16,8 +16,8 @@ pub struct Message
 
 impl FromStr for Message
 {
-    type Err = ();
-    fn from_str(s: &str) -> Result<Self, ()>
+    type Err = MessageError;
+    fn from_str(s: &str) -> MessageResult<Self>
     {
         let mut line = String::from(s);
         let original_line = line.clone();
@@ -132,3 +132,5 @@ impl Error for MessageError
         self.0
     }
 }
+
+pub type MessageResult<T> = Result<T, MessageError>;
