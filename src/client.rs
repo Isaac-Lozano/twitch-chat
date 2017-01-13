@@ -241,4 +241,4 @@ impl From<WebSocketError> for ClientError
     }
 }
 
-type ClientResult<T> = Result<T, ClientError>;
+pub type ClientResult<T> = Result<T, ClientError>;
