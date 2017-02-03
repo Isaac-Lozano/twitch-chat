@@ -27,6 +27,7 @@ fn main() {
                     {
                         let out_str = format!("You said: {}", message);
                         println!(">> {}", out_str);
+                        /* Does not actually send anything if auth is None */
                         sender.send_message(channel, &out_str).unwrap();
                     }
                 }

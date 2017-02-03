@@ -4,13 +4,13 @@ use std::str::FromStr;
 use std::fmt;
 use std::error::Error;
 
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub struct Message
 {
     pub raw: String,
     pub tags: HashMap<String, String>,
     pub from: Option<String>,
-    pub cmd: String,
+    pub command: String,
     pub args: Vec<String>,
 }
 
@@ -107,7 +107,7 @@ impl FromStr for Message
                 raw: original_line,
                 tags: tags,
                 from: from,
-                cmd: cmd,
+                command: cmd,
                 args: args,
             }
         )

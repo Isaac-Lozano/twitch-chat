@@ -11,6 +11,8 @@ use websocket::client::request::Url;
 use websocket::message::Type;
 use websocket::result::WebSocketError;
 
+use std::io;
+
 use std::str;
 use std::str::FromStr;
 
@@ -48,6 +50,7 @@ impl ChatClient
 
     pub fn reconnect(&mut self) -> ClientResult<()>
     {
+        try!(self.sender.shutdown_all());
         let chat_url = Url::parse("wss://irc-ws.chat.twitch.tv/").unwrap();
         let request = try!(Client::connect(chat_url));
         let response = try!(request.send());
@@ -81,6 +84,7 @@ impl TwitchSender for ChatClient
 {
     fn send_raw(&mut self, message: &str) -> ClientResult<()>
     {
+        println!("<< {}", message);
         try!(self.sender.send_message(&WsMessage::text(message)));
         Ok(())
     }
@@ -105,8 +109,9 @@ impl TwitchReceiver for ChatClient
             {
                 let ret;
                 {
-                    let line = &self.buffer[..idx];
-                    ret = try!(Message::from_str(try!(str::from_utf8(line))));
+                    let line = try!(str::from_utf8(&self.buffer[..idx]));
+                    println!(">> {}", line);
+                    ret = try!(Message::from_str(line));
                 }
                 self.buffer = Vec::from(&self.buffer[idx+2..]);
                 return Ok(ret);
@@ -135,6 +140,7 @@ impl TwitchSender for ChatSender
 {
     fn send_raw(&mut self, message: &str) -> ClientResult<()>
     {
+        println!("<< {}", message);
         try!(self.sender.send_message(&WsMessage::text(message)));
         Ok(())
     }
@@ -166,8 +172,9 @@ impl TwitchReceiver for ChatReceiver
             {
                 let ret;
                 {
-                    let line = &self.buffer[..idx];
-                    ret = try!(Message::from_str(try!(str::from_utf8(line))));
+                    let line = try!(str::from_utf8(&self.buffer[..idx]));
+                    println!(">> {}", line);
+                    ret = try!(Message::from_str(line));
                 }
                 self.buffer = Vec::from(&self.buffer[idx+2..]);
                 return Ok(ret);
@@ -229,6 +236,7 @@ pub enum ClientError
     MessageError(MessageError),
     Utf8Error(str::Utf8Error),
     WebSocketError(WebSocketError),
+    IOError(io::Error),
 }
 
 impl fmt::Display for ClientError
@@ -248,6 +256,7 @@ impl Error for ClientError
             ClientError::MessageError(_) => "Error parsing incoming message",
             ClientError::Utf8Error(_) => "UTF-8 error while parsing message",
             ClientError::WebSocketError(_) => "Websocket error",
+            ClientError::IOError(_) => "IO error",
         }
     }
 
@@ -258,6 +267,7 @@ impl Error for ClientError
             ClientError::MessageError(ref e) => Some(e),
             ClientError::Utf8Error(ref e) => Some(e),
             ClientError::WebSocketError(ref e) => Some(e),
+            ClientError::IOError(ref e) => Some(e),
         }
     }
 }
@@ -283,6 +293,14 @@ impl From<WebSocketError> for ClientError
     fn from(e: WebSocketError) -> ClientError
     {
         ClientError::WebSocketError(e)
+    }
+}
+
+impl From<io::Error> for ClientError
+{
+    fn from(e: io::Error) -> ClientError
+    {
+        ClientError::IOError(e)
     }
 }
 
