@@ -1,3 +1,4 @@
+#[derive(Clone,Debug)]
 pub struct Auth
 {
     pub username: String,
